@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 
@@ -10,7 +10,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  runApp(
+    const MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -33,8 +35,6 @@ class MyWidget extends StatefulWidget {
 
 class _MyWidgetState extends State<MyWidget> {
   final TextEditingController _controller = TextEditingController();
-
-  final _list = List.generate(10, (index) => 'test $index');
 
   @override
   void dispose() {
@@ -97,7 +97,7 @@ class _MyWidgetState extends State<MyWidget> {
                   onPressed: () {
                     final document = <String, dynamic>{
                       'content': _controller.text,
-                      'createdAt': Timestamp.fromDate(DateTime.now()),
+                      'created': Timestamp.fromDate(DateTime.now()),
                     };
                     FirebaseFirestore.instance.collection('todo').doc().set(document);
                     setState(_controller.clear);
