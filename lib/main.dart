@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_app/service/firebase_service.dart';
 
 import 'firebase_options.dart';
 
@@ -35,6 +36,7 @@ class MyWidget extends StatefulWidget {
 
 class _MyWidgetState extends State<MyWidget> {
   final TextEditingController _controller = TextEditingController();
+  final FirebaseService _service = FirebaseService();
 
   @override
   void dispose() {
@@ -54,7 +56,7 @@ class _MyWidgetState extends State<MyWidget> {
                 height: double.infinity,
                 alignment: Alignment.topCenter,
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('todo').orderBy('created').snapshots(),
+                  stream: _service.getItems(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return const Text('エラー');
@@ -62,22 +64,29 @@ class _MyWidgetState extends State<MyWidget> {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    // Listの作成
-                    final list = snapshot.requireData.docs.map<String>((DocumentSnapshot document) {
-                      final documentData = document.data()! as Map<String, dynamic>;
-                      return documentData['content']! as String;
+                    final List contents = snapshot.data!.docs.map((doc) {
+                      Map value = doc.data() as Map<dynamic, dynamic>;
+                      value['docId'] = doc.id;
+                      return value;
                     }).toList();
 
-                    final reverseList = list.reversed.toList();
-
                     return ListView.builder(
-                      itemCount: reverseList.length,
+                      itemCount: contents.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return Center(
-                          child: Text(
-                            reverseList[index],
-                            style: const TextStyle(fontSize: 20),
-                          ),
+                        Map content = contents[index];
+                        return Column(
+                          children: [
+                            Text(content['content'], style: TextStyle(fontSize: 24)),
+                            MaterialButton(
+                              onPressed: () => _service.deleteItem(doc: content["docId"]),
+                              color: Colors.redAccent,
+                              child: const Text(
+                                '削除',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            )
+                            // Text(content['isChecked'], style: TextStyle(fontSize: 18)),
+                          ],
                         );
                       },
                     );
@@ -95,11 +104,7 @@ class _MyWidgetState extends State<MyWidget> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final document = <String, dynamic>{
-                      'content': _controller.text,
-                      'created': Timestamp.fromDate(DateTime.now()),
-                    };
-                    FirebaseFirestore.instance.collection('todo').doc().set(document);
+                    _service.postItem(content: _controller.text);
                     setState(_controller.clear);
                   },
                   child: const Text('追加'),
