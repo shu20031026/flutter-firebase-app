@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -74,8 +76,15 @@ class _MyWidgetState extends State<MyWidget> {
                       itemCount: contents.length,
                       itemBuilder: (BuildContext context, int index) {
                         Map content = contents[index];
+                        bool isCheckedValue = content["isChecked"];
                         return Column(
                           children: [
+                            MyCheckBox(
+                              defaultValue: isCheckedValue,
+                              onChanged: (value) {
+                                _service.updateItem(doc: content["docId"], isChecked: value);
+                              },
+                            ),
                             Text(content['content'], style: TextStyle(fontSize: 24)),
                             MaterialButton(
                               onPressed: () => _service.deleteItem(doc: content["docId"]),
@@ -114,6 +123,42 @@ class _MyWidgetState extends State<MyWidget> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class MyCheckBox extends StatefulWidget {
+  final bool defaultValue;
+  final ValueChanged<bool?>? onChanged;
+
+  const MyCheckBox({Key? key, required this.defaultValue, required this.onChanged}) : super(key: key);
+
+  @override
+  State<MyCheckBox> createState() => _MyCheckBoxState();
+}
+
+class _MyCheckBoxState extends State<MyCheckBox> {
+  bool _flag = false;
+  @override
+  void initState() {
+    _flag = widget.defaultValue;
+    super.initState();
+  }
+
+  void _handleCheckbox(bool? e) {
+    setState(() {
+      _flag = e!;
+    });
+    widget.onChanged!(e);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Checkbox(
+      checkColor: Colors.white,
+      activeColor: Colors.blue,
+      value: _flag,
+      onChanged: _handleCheckbox,
     );
   }
 }
